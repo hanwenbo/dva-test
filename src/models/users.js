@@ -13,7 +13,7 @@ export default {
     },
   },
   effects: {
-    *fetch({ payload: { page = 1 } }, { call, put }) {
+    * fetch({ payload: { page = 1 } }, { call, put }) {
       const { data, headers } = yield call(usersService.fetch, { page });
       yield put({
         type: 'save',
@@ -24,25 +24,36 @@ export default {
         },
       });
     },
-    *remove({ payload: id }, { call, put }) {
+    * remove({ payload: id }, { call, put }) {
       yield call(usersService.remove, id);
       yield put({ type: 'reload' });
     },
-    *patch({ payload: { id, values } }, { call, put }) {
+    * patch({ payload: { id, values } }, { call, put }) {
       yield call(usersService.patch, id, values);
       yield put({ type: 'reload' });
     },
-    *create({ payload: values }, { call, put }) {
+    * create({ payload: values }, { call, put }) {
       yield call(usersService.create, values);
       yield put({ type: 'reload' });
     },
-    *reload(action, { put, select }) {
+    * reload(action, { put, select }) {
       const page = yield select(state => state.users.page);
       yield put({ type: 'fetch', payload: { page } });
     },
   },
   subscriptions: {
     setup({ dispatch, history }) {
+      const location = history.getCurrentLocation();
+      switch (location.pathname) {
+        case '/users':
+          if (location.action === 'POP') {
+            dispatch({ type: 'fetch', payload: location.query });
+          }
+          break;
+        default:
+          break;
+      }
+      // listen 每次走路由都会通知，直接访问的情况下除外
       return history.listen(({ pathname, query }) => {
         if (pathname === '/users') {
           dispatch({ type: 'fetch', payload: query });
